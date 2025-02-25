@@ -7,7 +7,25 @@ import logging
 from datetime import datetime
 from monitoring.middleware import MonitoringService
 
-app = FastAPI()
+app = FastAPI(
+    title="Employee Attrition Prediction API",
+    description="API for predicting employee attrition risk using ML models",
+    version="1.0.0",
+    contact={
+        "name": "Your Engineering Team",
+        "email": "ai-team@company.com"
+    },
+    openapi_tags=[
+        {
+            "name": "Predictions",
+            "description": "Endpoints for making attrition risk predictions"
+        },
+        {
+            "name": "Monitoring",
+            "description": "Model performance monitoring and data drift detection"
+        }
+    ]
+)
 
 monitor = MonitoringService()
 
@@ -19,17 +37,44 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class PredictionInput(BaseModel):
-    employee_id: str
-    age: int
-    monthly_income: float
-    total_working_years: int
-    department: str
-    education_field: str
-    job_role: str
+    employee_id: str = "550e8400-e29b-41d4-a716-446655440000"
+    age: int = 35
+    monthly_income: float = 6500.0
+    total_working_years: int = 7
+    department: str = "Research & Development"
+    education_field: str = "Life Sciences"
+    job_role: str = "Research Scientist"
 
-@app.post("/predict")
+class Config:
+        schema_extra = {
+            "example": {
+                "employee_id": "550e8400-e29b-41d4-a716-446655440000",
+                "age": 35,
+                "monthly_income": 6500,
+                "total_working_years": 7,
+                "department": "Research & Development",
+                "education_field": "Life Sciences",
+                "job_role": "Research Scientist"
+            }
+        }
+
+@app.post("/predict", 
+         tags=["Predictions"],
+         summary="Predict attrition risk",
+         response_description="Predicted attrition risk score")
 async def predict_attrition(input: PredictionInput):
     try:
+        """
+    Predicts the attrition risk for an employee based on their profile
+    
+    - **employee_id**: Unique employee identifier (UUID format)
+    - **age**: Employee's age in years
+    - **monthly_income**: Gross monthly salary
+    - **total_working_years**: Total years of professional experience
+    - **department**: Current department
+    - **education_field**: Field of education
+    - **job_role**: Current job role
+    """
         # Load model pipeline
         model = joblib.load("ml_engine/models/xgboost_pipeline.joblib")
         
@@ -62,7 +107,10 @@ async def predict_attrition(input: PredictionInput):
         logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.get("/monitor")
+@app.get("/monitor",
+        tags=["Monitoring"],
+        summary="Model monitoring report",
+        description="Returns data drift and model performance metrics")
 async def get_monitoring_report():
     report = monitor.generate_monitoring_report()
     if report:

@@ -1,5 +1,7 @@
 # monitoring/middleware.py
+from evidently.metric_preset import DataDriftPreset, DataQualityPreset, ClassificationPreset
 from evidently.report import Report
+
 from evidently.metrics import *
 import pandas as pd
 import logging
